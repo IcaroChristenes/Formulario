@@ -183,7 +183,7 @@ function formatPhone(input) {
 async function buscar() {
   const phone = document.getElementById("phone").value.replace(/\D/g,'');
 
-  const res = await fetch(`http://localhost/Wedding_site12/api/getGuest.php?phone=${phone}`);
+  const res = await fetch(`https://formulario-r5fz.onrender.com/api/getGuest.php?phone=${phone}`);
   const data = await res.json();
 
   if (data.guest) {
@@ -247,7 +247,7 @@ function remover(i) {
 
 async function enviar(presenca = true) {
 
-  const res = await fetch("http://localhost/Wedding_site12/api/confirm.php", {
+  const res = await fetch("https://formulario-r5fz.onrender.com/api/confirm.php", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body: JSON.stringify({
