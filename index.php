@@ -184,7 +184,10 @@ async function buscar() {
   const phone = document.getElementById("phone").value.replace(/\D/g,'');
 
   const res = await fetch(`https://formulario-r5fz.onrender.com/api/getGuest.php?phone=${phone}`);
-  const data = await res.json();
+  const text = await res.text();
+console.log("Resposta do servidor:", text);
+
+const data = JSON.parse(text);
 
   if (data.guest) {
     guest = data.guest;
@@ -257,7 +260,10 @@ async function enviar(presenca = true) {
     })
   });
 
-  const data = await res.json();
+  const text = await res.text();
+console.log("Resposta do servidor:", text);
+
+const data = JSON.parse(text);
 
   if (data.status === "sucesso") {
     mostrarModal();
