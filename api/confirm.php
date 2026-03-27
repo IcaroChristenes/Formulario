@@ -29,11 +29,10 @@ try {
     }
 
     $phone = trim($data['phone'] ?? '');
-    $attending = filter_var($data['attending'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    $attending = $data['attending'] ?? false;
 
-if ($attending === null) {
-    $attending = false;
-}
+$attending = ($attending === true || $attending === "true" || $attending === 1 || $attending === "1");
+    
     $names = $data['accompanying'] ?? [];
 
     if (empty($phone)) {
@@ -50,10 +49,11 @@ if ($attending === null) {
             RETURNING id";
 
     $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        ':attending' => $attending,
-        ':phone' => $phone
-    ]);
+
+$stmt->bindValue(':attending', $attending, PDO::PARAM_BOOL);
+$stmt->bindValue(':phone', $phone);
+
+$stmt->execute();
 
     if ($stmt->rowCount() == 0) {
         echo json_encode([
