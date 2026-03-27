@@ -250,6 +250,8 @@ function remover(i) {
 ===================== */
 
 async function enviar(presenca = true) {
+  
+  presenca = Boolean(presenca); // garante que seja booleano
 
   const res = await fetch("https://formulario-1-ad5k.onrender.com/api/confirm.php", {
     method:"POST",
