@@ -29,7 +29,7 @@ try {
     }
 
     $phone = trim($data['phone'] ?? '');
-    $attending = $data['attending'] ?? false;
+    $attending = filter_var($data['attending'] ?? false, FILTER_VALIDATE_BOOLEAN);
     $names = $data['accompanying'] ?? [];
 
     if (empty($phone)) {

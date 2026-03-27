@@ -209,6 +209,7 @@ function confirmar(vai) {
     step = "acompanhantes";
     render();
   } else {
+    acompanhantes = [];
     enviar(false);
   }
 }
@@ -255,7 +256,7 @@ async function enviar(presenca = true) {
     headers:{"Content-Type":"application/json"},
     body: JSON.stringify({
       phone: guest.phone,
-      attending: presenca,
+      attending: !!presenca,
       accompanying: acompanhantes
     })
   });
