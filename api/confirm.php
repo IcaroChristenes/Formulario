@@ -1,34 +1,44 @@
 <?php
+header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
+    http_response_code(200);
+    exit();
 }
 
-require 'db.php';
-
-$raw_input = file_get_contents("php://input");
-error_log("Raw POST input: " . $raw_input);
-$data = json_decode($raw_input, true);
-if (json_last_error() !== JSON_ERROR_NONE) {
-  echo json_encode(["erro" => "JSON parse fail: " . json_last_error_msg()]);
-  exit;
-}
-
-$phone = trim($data['phone'] ?? '');
-if (empty($phone)) {
-  echo json_encode(["erro" => "Phone empty"]);
-  exit;
-}
-$attending = $data['attending'];
-$names = $data['accompanying']; // array de nomes
+ini_set('display_errors', 0);
+error_reporting(0);
+ob_clean();
 
 try {
+
+    require 'db.php';
+
+    $raw_input = file_get_contents("php://input");
+    $data = json_decode($raw_input, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        echo json_encode([
+            "erro" => "JSON inválido",
+            "debug" => json_last_error_msg()
+        ]);
+        exit;
+    }
+
+    $phone = trim($data['phone'] ?? '');
+    $attending = $data['attending'] ?? false;
+    $names = $data['accompanying'] ?? [];
+
+    if (empty($phone)) {
+        echo json_encode(["erro" => "Telefone vazio"]);
+        exit;
+    }
+
     $conn->beginTransaction();
 
-    // atualizar presença
     $sql = "UPDATE guests 
             SET attending = :attending,
                 response_timestamp = NOW()
@@ -36,15 +46,16 @@ try {
             RETURNING id";
 
     $stmt = $conn->prepare($sql);
-$stmt->execute([
+    $stmt->execute([
         ':attending' => $attending,
         ':phone' => $phone
     ]);
 
-    error_log("UPDATE phone: " . $phone . " affected: " . $stmt->rowCount());
-
     if ($stmt->rowCount() == 0) {
-        echo json_encode(["debug" => "No row updated for phone: '" . $phone . "' length:" . strlen($phone)]);
+        echo json_encode([
+            "erro" => "Nenhum convidado atualizado",
+            "debug" => $phone
+        ]);
         exit;
     }
 
@@ -56,11 +67,9 @@ $stmt->execute([
 
     $guest_id = $guest['id'];
 
-    // remover acompanhantes antigos
     $conn->prepare("DELETE FROM guests_accompanying WHERE guest_id = :id")
          ->execute([':id' => $guest_id]);
 
-    // inserir novos acompanhantes
     $sqlInsert = "INSERT INTO guests_accompanying (guest_id, name) VALUES (:guest_id, :name)";
     $stmtInsert = $conn->prepare($sqlInsert);
 
@@ -75,9 +84,18 @@ $stmt->execute([
 
     $conn->commit();
 
-    echo json_encode(["status" => "sucesso"]);
+    echo json_encode([
+        "status" => "sucesso"
+    ]);
 
 } catch (Exception $e) {
-    $conn->rollBack();
-    echo json_encode(["erro" => $e->getMessage()]);
+
+    if ($conn && $conn->inTransaction()) {
+        $conn->rollBack();
+    }
+
+    echo json_encode([
+        "erro" => "Erro interno",
+        "debug" => $e->getMessage()
+    ]);
 }

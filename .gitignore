@@ -1,0 +1,16 @@
+# Ignore environment files
+.env
+*.env
+api/.env
+
+# Dependencies
+node_modules/
+vendor/
+
+# Logs
+*.log
+logs/
+
+# OS generated
+.DS_Store
+Thumbs.db
